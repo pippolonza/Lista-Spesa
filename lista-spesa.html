@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lista della Spesa 🛒</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green-50: #EAF3DE; --green-100: #C0DD97; --green-200: #97C459;
+    --green-600: #3B6D11; --green-800: #27500A;
+    --amber-50: #FAEEDA; --amber-100: #FAC775; --amber-600: #854F0B; --amber-800: #633806;
+    --coral-50: #FAECE7; --coral-100: #F5C4B3; --coral-600: #993C1D; --coral-800: #712B13;
+    --gray-50: #F1EFE8; --gray-100: #D3D1C7; --gray-200: #B4B2A9; --gray-600: #5F5E5A; --gray-800: #444441;
+    --bg: #FAFAF7; --surface: #FFFFFF; --text: #2C2C2A; --text-muted: #5F5E5A;
+    --border: rgba(0,0,0,0.1); --radius: 14px; --radius-sm: 8px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1C1C1A; --surface: #252522; --text: #F1EFE8; --text-muted: #B4B2A9;
+      --border: rgba(255,255,255,0.1);
+      --green-50: #27500A; --green-100: #3B6D11; --green-600: #C0DD97; --green-800: #EAF3DE;
+      --amber-50: #633806; --amber-100: #854F0B; --amber-600: #FAC775; --amber-800: #FAEEDA;
+      --coral-50: #712B13; --coral-100: #993C1D; --coral-600: #F5C4B3; --coral-800: #FAECE7;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 0 0 80px; }
+
+  /* SETUP SCREEN */
+  #setup-screen {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px;
+  }
+  .setup-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
+    padding: 32px 28px; width: 100%; max-width: 440px;
+  }
+  .setup-logo { font-family: 'Fraunces', serif; font-size: 28px; color: var(--green-600); margin-bottom: 8px; }
+  .setup-logo span { font-style: italic; }
+  .setup-sub { color: var(--text-muted); font-size: 14px; margin-bottom: 28px; line-height: 1.5; }
+  .setup-label { font-size: 13px; font-weight: 500; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .setup-input {
+    width: 100%; padding: 12px 14px; border: 1px solid var(--border);
+    border-radius: var(--radius-sm); background: var(--bg); color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-size: 15px; outline: none; margin-bottom: 16px;
+    transition: border-color 0.15s;
+  }
+  .setup-input:focus { border-color: var(--green-200); }
+  .setup-input::placeholder { color: var(--text-muted); }
+  .setup-hint {
+    font-size: 12px; color: var(--text-muted); background: var(--gray-50);
+    border-radius: var(--radius-sm); padding: 10px 12px; margin-bottom: 20px; line-height: 1.5;
+  }
+  .setup-hint b { color: var(--text); }
+  .btn-primary {
+    width: 100%; padding: 13px; background: var(--green-600); color: var(--green-50);
+    border: none; border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif;
+    font-size: 16px; font-weight: 500; cursor: pointer; transition: opacity 0.15s;
+  }
+  .btn-primary:hover { opacity: 0.85; }
+  .setup-divider { text-align: center; color: var(--text-muted); font-size: 13px; margin: 16px 0; }
+  .btn-secondary {
+    width: 100%; padding: 11px; background: transparent; color: var(--text);
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif; font-size: 15px; cursor: pointer; transition: background 0.15s;
+  }
+  .btn-secondary:hover { background: var(--gray-50); }
+
+  /* LOADING */
+  #loading-screen {
+    display: none; min-height: 100vh; align-items: center; justify-content: center;
+    flex-direction: column; gap: 16px;
+  }
+  .spinner {
+    width: 36px; height: 36px; border: 3px solid var(--border);
+    border-top-color: var(--green-600); border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* APP */
+  #app-screen { display: none; }
+  header {
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    padding: 16px 20px 12px; position: sticky; top: 0; z-index: 10;
+  }
+  .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .logo { font-family: 'Fraunces', serif; font-size: 20px; color: var(--green-600); }
+  .logo span { font-style: italic; }
+  .logo-sub { font-size: 12px; color: var(--text-muted); font-family: 'DM Sans', sans-serif; }
+  .user-btn {
+    display: flex; align-items: center; gap: 8px; cursor: pointer;
+    background: var(--green-50); border: 1px solid var(--green-100);
+    border-radius: 40px; padding: 5px 12px 5px 7px; font-size: 13px;
+    font-weight: 500; color: var(--green-800); transition: opacity 0.15s;
+  }
+  .user-btn:hover { opacity: 0.8; }
+  .avatar {
+    width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center;
+    justify-content: center; font-size: 11px; font-weight: 600;
+  }
+  .sync-dot {
+    width: 7px; height: 7px; border-radius: 50%; background: var(--green-200);
+    display: inline-block; margin-right: 4px;
+  }
+  .sync-dot.offline { background: var(--coral-600); }
+  .tabs {
+    display: flex; gap: 3px; background: var(--gray-50); border-radius: 10px; padding: 3px;
+  }
+  .tab {
+    flex: 1; padding: 6px; border: none; background: transparent;
+    border-radius: 7px; font-family: 'DM Sans', sans-serif; font-size: 13px;
+    font-weight: 500; color: var(--text-muted); cursor: pointer; transition: all 0.15s;
+  }
+  .tab.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+
+  main { padding: 16px; max-width: 600px; margin: 0 auto; }
+
+  .add-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 18px; }
+  .add-row { display: flex; gap: 8px; margin-bottom: 8px; }
+  .add-input {
+    flex: 1; padding: 10px 14px; border: 1px solid var(--border);
+    border-radius: var(--radius-sm); background: var(--bg); color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-size: 15px; outline: none; transition: border-color 0.15s;
+  }
+  .add-input:focus { border-color: var(--green-200); }
+  .add-input::placeholder { color: var(--text-muted); }
+  .add-meta { display: flex; gap: 8px; }
+  .add-select {
+    flex: 1; padding: 8px 10px; border: 1px solid var(--border);
+    border-radius: var(--radius-sm); background: var(--bg); color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-size: 13px; outline: none; cursor: pointer;
+  }
+  .btn-add {
+    padding: 10px 18px; background: var(--green-600); color: var(--green-50);
+    border: none; border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif;
+    font-size: 15px; font-weight: 500; cursor: pointer; white-space: nowrap; transition: opacity 0.15s;
+  }
+  .btn-add:hover { opacity: 0.85; }
+  .btn-add:disabled { opacity: 0.5; cursor: default; }
+
+  .filter-bar { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 14px; scrollbar-width: none; }
+  .filter-bar::-webkit-scrollbar { display: none; }
+  .filter-pill {
+    padding: 5px 14px; border-radius: 20px; font-size: 13px; font-weight: 500;
+    border: 1px solid var(--border); background: var(--surface);
+    color: var(--text-muted); cursor: pointer; white-space: nowrap; transition: all 0.15s;
+  }
+  .filter-pill.active { background: var(--green-50); border-color: var(--green-100); color: var(--green-800); }
+
+  .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 18px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px; text-align: center; }
+  .stat-num { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 600; }
+  .stat-label { font-size: 11px; color: var(--text-muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+  .section-title { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-muted); margin: 14px 0 8px; }
+  .item {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 11px 13px; display: flex; align-items: center; gap: 11px; margin-bottom: 7px;
+    transition: opacity 0.2s;
+  }
+  .item.done { opacity: 0.45; }
+  .item.done .item-name { text-decoration: line-through; }
+  .item-check {
+    width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+    cursor: pointer; flex-shrink: 0; display: flex; align-items: center;
+    justify-content: center; transition: all 0.15s;
+  }
+  .item-check.checked { background: var(--green-200); border-color: var(--green-200); }
+  .item-check.checked::after { content: '✓'; font-size: 12px; color: var(--green-800); font-weight: 700; }
+  .item-info { flex: 1; min-width: 0; }
+  .item-name { font-size: 15px; font-weight: 500; }
+  .item-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .cat-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .item-qty { font-size: 13px; color: var(--text-muted); background: var(--gray-50); border-radius: 6px; padding: 2px 8px; flex-shrink: 0; }
+  .item-del { width: 28px; height: 28px; border: none; background: transparent; color: var(--text-muted); cursor: pointer; border-radius: 6px; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: background 0.1s, color 0.1s; flex-shrink: 0; }
+  .item-del:hover { background: var(--coral-50); color: var(--coral-600); }
+  .prio-tag { font-size: 11px; padding: 1px 7px; border-radius: 20px; font-weight: 500; background: var(--coral-50); color: var(--coral-600); }
+
+  .history-item { display: flex; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border); }
+  .history-icon { width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 13px; }
+  .h-add { background: var(--green-50); }
+  .h-done { background: var(--amber-50); }
+  .h-del { background: var(--coral-50); }
+  .history-text { font-size: 14px; }
+  .history-who { font-weight: 500; }
+  .history-time { font-size: 12px; color: var(--text-muted); }
+
+  .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; align-items: flex-end; justify-content: center; }
+  .overlay.open { display: flex; }
+  .sheet { background: var(--surface); border-radius: 20px 20px 0 0; width: 100%; max-width: 600px; padding: 22px 18px 36px; }
+  .sheet-title { font-family: 'Fraunces', serif; font-size: 18px; margin-bottom: 14px; text-align: center; }
+  .user-option { display: flex; align-items: center; gap: 12px; padding: 13px; border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 8px; cursor: pointer; transition: background 0.1s; }
+  .user-option:hover { background: var(--gray-50); }
+  .user-option .avatar { width: 40px; height: 40px; font-size: 15px; }
+  .user-option-name { font-weight: 500; font-size: 15px; }
+
+  .empty { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+  .empty-icon { font-size: 38px; margin-bottom: 10px; }
+  .empty p { font-size: 15px; }
+
+  .toast {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: var(--gray-800); color: var(--gray-50); padding: 10px 20px;
+    border-radius: 20px; font-size: 14px; font-weight: 500; z-index: 999;
+    transition: transform 0.3s; pointer-events: none; white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- SETUP SCREEN -->
+<div id="setup-screen">
+  <div class="setup-card">
+    <div class="setup-logo">Lista della <span>Spesa</span> 🛒</div>
+    <p class="setup-sub">App condivisa per tutta la famiglia — ogni modifica appare in tempo reale su tutti i dispositivi.</p>
+
+    <div id="setup-step-1">
+      <div class="setup-label">Crea una nuova famiglia</div>
+      <input class="setup-input" id="family-name-input" placeholder="Es: Famiglia Rossi" maxlength="30">
+      <div class="setup-hint">
+        <b>Come funziona:</b> inserisci un nome univoco per la tua famiglia. Condividi poi questo nome con i familiari così potranno unirsi. Consiglio: usa un nome difficile da indovinare per la privacy (es. <b>RossiBg2024</b>).
+      </div>
+      <button class="btn-primary" onclick="createFamily()">Crea e accedi →</button>
+      <div class="setup-divider">oppure</div>
+      <input class="setup-input" id="join-name-input" placeholder="Nome famiglia esistente (es: RossiBg2024)" maxlength="30">
+      <button class="btn-secondary" onclick="joinFamily()">Unisciti alla famiglia</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div id="loading-screen">
+  <div class="spinner"></div>
+  <div style="color: var(--text-muted); font-size: 14px;">Connessione in corso…</div>
+</div>
+
+<!-- NAME SCREEN -->
+<div id="name-screen" style="display:none; min-height:100vh; align-items:center; justify-content:center; padding:24px;">
+  <div class="setup-card">
+    <div class="setup-logo" style="font-size:22px; margin-bottom:6px;">Chi sei?</div>
+    <p class="setup-sub">Inserisci il tuo nome così gli altri sanno chi aggiunge cosa.</p>
+    <div class="setup-label">Il tuo nome</div>
+    <input class="setup-input" id="user-name-input" placeholder="Es: Mamma, Marco, Sofia…" maxlength="20" onkeydown="if(event.key==='Enter') confirmName()">
+    <button class="btn-primary" onclick="confirmName()">Entra nella lista →</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app-screen">
+  <header>
+    <div class="header-top">
+      <div>
+        <div class="logo">Lista della <span>Spesa</span> 🛒</div>
+        <div class="logo-sub"><span class="sync-dot" id="sync-dot"></span><span id="sync-label">in tempo reale</span></div>
+      </div>
+      <div class="user-btn" onclick="openUserOverlay()">
+        <div class="avatar" id="cur-avatar">?</div>
+        <span id="cur-name">Tu</span>
+      </div>
+    </div>
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('lista', this)">Lista</button>
+      <button class="tab" onclick="switchTab('acquistati', this)">Acquistati</button>
+      <button class="tab" onclick="switchTab('cronologia', this)">Cronologia</button>
+    </div>
+  </header>
+
+  <main>
+    <div id="tab-lista">
+      <div class="add-card">
+        <div class="add-row">
+          <input class="add-input" id="new-name" placeholder="Cosa serve? (es. Latte, Detersivo…)" onkeydown="if(event.key==='Enter') addItem()">
+          <button class="btn-add" id="btn-add" onclick="addItem()">+ Aggiungi</button>
+        </div>
+        <div class="add-meta">
+          <select class="add-select" id="new-cat">
+            <option value="🥦 Frutta & Verdura">🥦 Frutta & Verdura</option>
+            <option value="🥛 Latticini">🥛 Latticini</option>
+            <option value="🥩 Carne & Pesce">🥩 Carne & Pesce</option>
+            <option value="🍞 Pane & Dolci">🍞 Pane & Dolci</option>
+            <option value="🥫 Dispensa">🥫 Dispensa</option>
+            <option value="🧴 Igiene & Pulizia">🧴 Igiene & Pulizia</option>
+            <option value="🏠 Casa">🏠 Casa</option>
+            <option value="💊 Farmacia">💊 Farmacia</option>
+            <option value="🐾 Animali">🐾 Animali</option>
+            <option value="📦 Altro">📦 Altro</option>
+          </select>
+          <input class="add-input add-qty" id="new-qty" placeholder="Qty" type="text" style="max-width:70px; flex:none;">
+          <select class="add-select" id="new-prio" style="max-width:130px; flex:none;">
+            <option value="normale">Normale</option>
+            <option value="alta">⚠️ Urgente</option>
+            <option value="bassa">Bassa priorità</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-num" id="stat-total" style="color:var(--green-600)">0</div><div class="stat-label">Da comprare</div></div>
+        <div class="stat-card"><div class="stat-num" id="stat-urgenti" style="color:var(--coral-600)">0</div><div class="stat-label">Urgenti</div></div>
+        <div class="stat-card"><div class="stat-num" id="stat-cat" style="color:var(--amber-600)">0</div><div class="stat-label">Categorie</div></div>
+      </div>
+
+      <div class="filter-bar" id="filter-bar"></div>
+      <div id="items-list"></div>
+    </div>
+
+    <div id="tab-acquistati" style="display:none">
+      <div id="done-list"></div>
+      <div style="margin-top:16px; text-align:center;">
+        <button onclick="clearDone()" style="padding:10px 20px; border:1px solid var(--coral-100); background:var(--coral-50); color:var(--coral-600); border-radius:8px; font-family:'DM Sans',sans-serif; font-size:14px; cursor:pointer; font-weight:500;">🗑 Svuota acquistati</button>
+      </div>
+    </div>
+
+    <div id="tab-cronologia" style="display:none">
+      <div id="history-list"></div>
+    </div>
+  </main>
+</div>
+
+<!-- USER OVERLAY -->
+<div class="overlay" id="user-overlay" onclick="closeOverlayIfBg(event, 'user-overlay')">
+  <div class="sheet">
+    <div class="sheet-title">Cambia nome</div>
+    <input class="setup-input" id="change-name-input" placeholder="Il tuo nome" maxlength="20" onkeydown="if(event.key==='Enter') changeName()">
+    <button class="btn-primary" onclick="changeName()">Salva nome</button>
+    <div style="margin-top:16px; text-align:center;">
+      <button onclick="leaveFamily()" style="color:var(--coral-600); background:none; border:none; font-family:'DM Sans',sans-serif; font-size:14px; cursor:pointer; text-decoration:underline;">Esci dalla famiglia (cambia famiglia)</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getDatabase, ref, push, set, update, remove, onValue, off, serverTimestamp, query, orderByChild, limitToLast }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+// ── FIREBASE CONFIG ──────────────────────────────────────────────────────────
+// ⚠️  SOSTITUISCI QUESTI VALORI con quelli del tuo progetto Firebase!
+// Leggi le istruzioni nel file LEGGIMI-FIREBASE.txt
+const firebaseConfig = {
+  apiKey: "AIzaSyAvLl7gAJl8tvFaCHjmrFzhhtY-9mAeiMQ",
+  authDomain: "lista-spesa-famigliat.firebaseapp.com",
+  databaseURL: "https://lista-spesa-famigliat-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "lista-spesa-famigliat",
+  storageBucket: "lista-spesa-famigliat.firebasestorage.app",
+  messagingSenderId: "278218283027",
+  appId: "1:278218283027:web:f4d8ed82b4ed86c5ec47e6"
+};
+// ─────────────────────────────────────────────────────────────────────────────
+
+const CAT_COLORS = {
+  '🥦 Frutta & Verdura':'#639922','🥛 Latticini':'#85B7EB','🥩 Carne & Pesce':'#F0997B',
+  '🍞 Pane & Dolci':'#EF9F27','🥫 Dispensa':'#B4B2A9','🧴 Igiene & Pulizia':'#5DCAA5',
+  '🏠 Casa':'#7F77DD','💊 Farmacia':'#D4537E','🐾 Animali':'#D85A30','📦 Altro':'#888780'
+};
+const COLORS = ['#97C459','#FAC775','#85B7EB','#F0997B','#5DCAA5','#7F77DD','#EF9F27','#D4537E'];
+
+let app, db;
+let familyId = null;
+let currentUser = null;
+let items = {};
+let history = [];
+let currentFilter = 'tutti';
+let currentTab = 'lista';
+let unsubItems = null, unsubHistory = null;
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+const configured = firebaseConfig.apiKey !== 'INSERISCI-QUI';
+
+if (!configured) {
+  document.getElementById('setup-screen').innerHTML = `
+    <div class="setup-card">
+      <div class="setup-logo" style="color:var(--coral-600)">⚠️ Configurazione necessaria</div>
+      <p class="setup-sub" style="margin-bottom:20px">
+        Prima di usare l'app devi inserire le credenziali Firebase.<br>
+        Leggi il file <b>LEGGIMI-FIREBASE.txt</b> incluso per le istruzioni passo passo (5 minuti).
+      </p>
+      <div class="setup-hint" style="font-size:13px">
+        <b>In breve:</b><br>
+        1. Vai su <a href="https://console.firebase.google.com" target="_blank" style="color:var(--green-600)">console.firebase.google.com</a><br>
+        2. Crea un progetto gratuito<br>
+        3. Attiva Realtime Database<br>
+        4. Copia la config nel file HTML (cerca "INSERISCI-QUI")<br>
+        5. Pubblica su Vercel come di consueto
+      </div>
+    </div>`;
+} else {
+  app = initializeApp(firebaseConfig);
+  db = getDatabase(app);
+  boot();
+}
+
+function boot() {
+  familyId = localStorage.getItem('ls_family');
+  currentUser = localStorage.getItem('ls_user');
+  if (!familyId) { showSetup(); return; }
+  if (!currentUser) { showNameScreen(); return; }
+  startApp();
+}
+
+function showSetup() {
+  document.getElementById('setup-screen').style.display = 'flex';
+}
+function showNameScreen() {
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('name-screen').style.display = 'flex';
+}
+function showApp() {
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('name-screen').style.display = 'none';
+  document.getElementById('loading-screen').style.display = 'none';
+  document.getElementById('app-screen').style.display = 'block';
+}
+
+// ── SETUP ────────────────────────────────────────────────────────────────────
+window.createFamily = function() {
+  const name = document.getElementById('family-name-input').value.trim();
+  if (!name) { toast('Inserisci un nome famiglia'); return; }
+  const id = name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9\-]/g,'');
+  if (!id) { toast('Nome non valido'); return; }
+  localStorage.setItem('ls_family', id);
+  familyId = id;
+  showNameScreen();
+};
+
+window.joinFamily = function() {
+  const name = document.getElementById('join-name-input').value.trim();
+  if (!name) { toast('Inserisci il nome famiglia'); return; }
+  const id = name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9\-]/g,'');
+  if (!id) { toast('Nome non valido'); return; }
+  localStorage.setItem('ls_family', id);
+  familyId = id;
+  showNameScreen();
+};
+
+window.confirmName = function() {
+  const name = document.getElementById('user-name-input').value.trim();
+  if (!name) { toast('Inserisci il tuo nome'); return; }
+  localStorage.setItem('ls_user', name);
+  currentUser = name;
+  startApp();
+};
+
+// ── APP START ────────────────────────────────────────────────────────────────
+function startApp() {
+  showApp();
+  updateUserUI();
+
+  // Listen items
+  const itemsRef = ref(db, `families/${familyId}/items`);
+  unsubItems = onValue(itemsRef, snap => {
+    items = snap.val() || {};
+    renderAll();
+  });
+
+  // Listen history (last 60)
+  const histRef = query(ref(db, `families/${familyId}/history`), orderByChild('ts'), limitToLast(60));
+  unsubHistory = onValue(histRef, snap => {
+    history = [];
+    snap.forEach(c => history.push({...c.val(), _key: c.key}));
+    history.sort((a,b) => b.ts - a.ts);
+    if (currentTab === 'cronologia') renderHistory();
+  });
+
+  // Online indicator
+  onValue(ref(db, '.info/connected'), snap => {
+    const online = snap.val();
+    document.getElementById('sync-dot').className = 'sync-dot' + (online ? '' : ' offline');
+    document.getElementById('sync-label').textContent = online ? 'in tempo reale' : 'offline';
+  });
+}
+
+function updateUserUI() {
+  if (!currentUser) return;
+  const initials = currentUser.substring(0,2).toUpperCase();
+  const color = COLORS[Math.abs(hashCode(currentUser)) % COLORS.length];
+  const av = document.getElementById('cur-avatar');
+  av.textContent = initials;
+  av.style.background = color + '30';
+  av.style.color = color;
+  av.style.border = '1.5px solid ' + color + '60';
+  document.getElementById('cur-name').textContent = currentUser;
+}
+
+function hashCode(s) {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = Math.imul(31, h) + s.charCodeAt(i) | 0;
+  return h;
+}
+
+// ── RENDER ───────────────────────────────────────────────────────────────────
+function renderAll() {
+  renderStats();
+  renderFilters();
+  if (currentTab === 'lista') renderItems();
+  if (currentTab === 'acquistati') renderDone();
+}
+
+function renderStats() {
+  const active = Object.values(items).filter(i => !i.done);
+  document.getElementById('stat-total').textContent = active.length;
+  document.getElementById('stat-urgenti').textContent = active.filter(i => i.prio === 'alta').length;
+  document.getElementById('stat-cat').textContent = new Set(active.map(i => i.cat)).size;
+}
+
+function renderFilters() {
+  const active = Object.values(items).filter(i => !i.done);
+  const cats = ['tutti', ...new Set(active.map(i => i.cat))];
+  document.getElementById('filter-bar').innerHTML = cats.map(c =>
+    `<button class="filter-pill ${currentFilter===c?'active':''}" onclick="setFilter('${esc(c)}', this)">${c==='tutti'?'Tutti':c}</button>`
+  ).join('');
+}
+
+function renderItems() {
+  const list = document.getElementById('items-list');
+  let arr = Object.entries(items).filter(([,i]) => !i.done).map(([k,i]) => ({...i,_key:k}));
+  if (currentFilter !== 'tutti') arr = arr.filter(i => i.cat === currentFilter);
+  arr.sort((a,b) => (b.prio==='alta')-(a.prio==='alta') || a.ts - b.ts);
+
+  if (!arr.length) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">🛒</div><p>Nessun prodotto da comprare</p></div>';
+    return;
+  }
+  const byCat = {};
+  arr.forEach(i => { if (!byCat[i.cat]) byCat[i.cat]=[]; byCat[i.cat].push(i); });
+
+  let html = '';
+  for (const [cat, catItems] of Object.entries(byCat)) {
+    html += `<div class="section-title">${cat}</div>`;
+    catItems.forEach(item => {
+      const color = CAT_COLORS[item.cat] || '#888';
+      html += `
+        <div class="item">
+          <div class="item-check" onclick="toggleItem('${item._key}')"></div>
+          <div class="item-info">
+            <div class="item-name">${escHtml(item.name)}${item.prio==='alta'?' <span class="prio-tag">urgente</span>':''}</div>
+            <div class="item-meta">
+              <span class="cat-dot" style="background:${color}"></span>
+              <b>${escHtml(item.addedBy)}</b> · ${timeAgo(item.ts)}
+            </div>
+          </div>
+          ${item.qty ? `<span class="item-qty">${escHtml(item.qty)}</span>` : ''}
+          <button class="item-del" onclick="deleteItem('${item._key}')" title="Rimuovi">✕</button>
+        </div>`;
+    });
+  }
+  list.innerHTML = html;
+}
+
+function renderDone() {
+  const list = document.getElementById('done-list');
+  const arr = Object.entries(items).filter(([,i]) => i.done).map(([k,i]) => ({...i,_key:k}));
+  arr.sort((a,b) => (b.doneTs||0) - (a.doneTs||0));
+  if (!arr.length) { list.innerHTML = '<div class="empty"><div class="empty-icon">✅</div><p>Nessun acquisto ancora</p></div>'; return; }
+  list.innerHTML = arr.map(item => {
+    const color = CAT_COLORS[item.cat] || '#888';
+    return `
+      <div class="item done">
+        <div class="item-check checked"></div>
+        <div class="item-info">
+          <div class="item-name">${escHtml(item.name)}</div>
+          <div class="item-meta">
+            <span class="cat-dot" style="background:${color}"></span>
+            preso da <b>${escHtml(item.doneBy||'?')}</b> · ${timeAgo(item.doneTs)}
+          </div>
+        </div>
+        ${item.qty ? `<span class="item-qty">${escHtml(item.qty)}</span>` : ''}
+        <button class="item-del" onclick="undoItem('${item._key}')" title="Rimetti in lista">↩</button>
+      </div>`;
+  }).join('');
+}
+
+function renderHistory() {
+  const list = document.getElementById('history-list');
+  if (!history.length) { list.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><p>Nessuna attività ancora</p></div>'; return; }
+  const MAP = { add:['➕','h-add','ha aggiunto'], done:['✅','h-done','ha preso'], delete:['🗑','h-del','ha rimosso'], undo:['↩','h-add','ha rimesso in lista'] };
+  list.innerHTML = history.map(h => {
+    const [icon, cls, verb] = MAP[h.action] || ['•','h-add','ha modificato'];
+    return `
+      <div class="history-item">
+        <div class="history-icon ${cls}">${icon}</div>
+        <div>
+          <div class="history-text"><span class="history-who">${escHtml(h.user)}</span> ${verb} <b>${escHtml(h.name)}</b></div>
+          <div class="history-time">${formatDate(h.ts)}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── ACTIONS ──────────────────────────────────────────────────────────────────
+window.addItem = async function() {
+  const nameEl = document.getElementById('new-name');
+  const name = nameEl.value.trim();
+  if (!name) { nameEl.focus(); return; }
+  const cat = document.getElementById('new-cat').value;
+  const qty = document.getElementById('new-qty').value.trim();
+  const prio = document.getElementById('new-prio').value;
+  const btn = document.getElementById('btn-add');
+  btn.disabled = true;
+  try {
+    const newRef = push(ref(db, `families/${familyId}/items`));
+    await set(newRef, { name, cat, qty, prio, done: false, addedBy: currentUser, ts: Date.now() });
+    await addHistory('add', name);
+    nameEl.value = '';
+    document.getElementById('new-qty').value = '';
+    document.getElementById('new-prio').value = 'normale';
+    nameEl.focus();
+  } catch(e) { toast('Errore: ' + e.message); }
+  btn.disabled = false;
+};
+
+window.toggleItem = async function(key) {
+  const item = items[key];
+  if (!item) return;
+  const done = !item.done;
+  await update(ref(db, `families/${familyId}/items/${key}`), {
+    done, doneBy: done ? currentUser : null, doneTs: done ? Date.now() : null
+  });
+  if (done) await addHistory('done', item.name);
+};
+
+window.deleteItem = async function(key) {
+  const item = items[key];
+  if (!item) return;
+  await addHistory('delete', item.name);
+  await remove(ref(db, `families/${familyId}/items/${key}`));
+};
+
+window.undoItem = async function(key) {
+  const item = items[key];
+  if (!item) return;
+  await update(ref(db, `families/${familyId}/items/${key}`), { done: false, doneBy: null, doneTs: null });
+  await addHistory('undo', item.name);
+};
+
+window.clearDone = async function() {
+  if (!confirm('Vuoi svuotare tutti gli acquistati?')) return;
+  const promises = Object.entries(items)
+    .filter(([,i]) => i.done)
+    .map(([k]) => remove(ref(db, `families/${familyId}/items/${k}`)));
+  await Promise.all(promises);
+};
+
+async function addHistory(action, name) {
+  await push(ref(db, `families/${familyId}/history`), { action, name, user: currentUser, ts: Date.now() });
+}
+
+// ── UI HELPERS ───────────────────────────────────────────────────────────────
+window.setFilter = function(cat, btn) {
+  currentFilter = cat;
+  document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  renderItems();
+};
+
+window.switchTab = function(tab, btn) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  ['lista','acquistati','cronologia'].forEach(t =>
+    document.getElementById('tab-'+t).style.display = t===tab ? '' : 'none'
+  );
+  if (tab === 'acquistati') renderDone();
+  if (tab === 'cronologia') renderHistory();
+};
+
+window.openUserOverlay = function() {
+  document.getElementById('change-name-input').value = currentUser || '';
+  document.getElementById('user-overlay').classList.add('open');
+};
+
+window.changeName = function() {
+  const name = document.getElementById('change-name-input').value.trim();
+  if (!name) { toast('Inserisci un nome'); return; }
+  localStorage.setItem('ls_user', name);
+  currentUser = name;
+  updateUserUI();
+  document.getElementById('user-overlay').classList.remove('open');
+  toast('Nome aggiornato!');
+};
+
+window.leaveFamily = function() {
+  if (!confirm('Vuoi uscire dalla famiglia? Dovrai reinserire il nome famiglia per rientrare.')) return;
+  localStorage.removeItem('ls_family');
+  localStorage.removeItem('ls_user');
+  location.reload();
+};
+
+window.closeOverlayIfBg = function(e, id) {
+  if (e.target.id === id) document.getElementById(id).classList.remove('open');
+};
+
+// ── UTILS ────────────────────────────────────────────────────────────────────
+function timeAgo(ts) {
+  if (!ts) return '';
+  const d = Date.now() - ts;
+  if (d < 60000) return 'poco fa';
+  if (d < 3600000) return Math.floor(d/60000) + ' min fa';
+  if (d < 86400000) return Math.floor(d/3600000) + ' ore fa';
+  if (d < 604800000) return Math.floor(d/86400000) + ' giorni fa';
+  return new Date(ts).toLocaleDateString('it-IT');
+}
+function formatDate(ts) {
+  return new Date(ts).toLocaleString('it-IT', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function esc(s) { return String(s).replace(/'/g,"\\'"); }
+
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>

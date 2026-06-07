@@ -1,0 +1,152 @@
+════════════════════════════════════════════════════════════
+  LISTA DELLA SPESA — Istruzioni per attivare Firebase
+  (Database condiviso per tutta la famiglia)
+════════════════════════════════════════════════════════════
+
+Tempo necessario: circa 10 minuti.
+È tutto gratuito — il piano Spark di Firebase è più che
+sufficiente per uso familiare (1 GB di dati, illimitati).
+
+────────────────────────────────────────────────────────────
+PASSO 1 — Crea il progetto Firebase
+────────────────────────────────────────────────────────────
+
+1. Vai su https://console.firebase.google.com
+2. Clicca "Aggiungi progetto" (o "Add project")
+3. Scegli un nome, es: "lista-spesa-famiglia"
+4. Disattiva Google Analytics (non serve)
+5. Clicca "Crea progetto" e aspetta 30 secondi
+
+────────────────────────────────────────────────────────────
+PASSO 2 — Attiva il Realtime Database
+────────────────────────────────────────────────────────────
+
+1. Nel menu a sinistra, clicca "Realtime Database"
+2. Clicca "Crea database"
+3. Scegli la posizione: "Europe-west1 (Belgium)"  ← consigliato
+4. Scegli "Inizia in modalità test"  ← importante!
+5. Clicca "Abilita"
+
+Il database è ora attivo. Vedrai un URL tipo:
+  https://lista-spesa-famiglia-default-rtdb.europe-west1.firebasedatabase.app
+
+────────────────────────────────────────────────────────────
+PASSO 3 — Ottieni la configurazione
+────────────────────────────────────────────────────────────
+
+1. Clicca l'icona ⚙️ Impostazioni del progetto (in alto a sinistra)
+2. Scorri in basso fino alla sezione "Le tue app"
+3. Clicca l'icona </> (Web)
+4. Registra l'app con un nome, es: "lista-spesa"
+5. NON spuntare "Firebase Hosting"
+6. Clicca "Registra app"
+7. Vedrai un blocco di codice con "firebaseConfig" — copialo!
+   Assomiglia a questo:
+
+   const firebaseConfig = {
+     apiKey: "AIzaSy...",
+     authDomain: "lista-spesa-famiglia.firebaseapp.com",
+     databaseURL: "https://lista-spesa-famiglia-default-rtdb...",
+     projectId: "lista-spesa-famiglia",
+     storageBucket: "lista-spesa-famiglia.appspot.com",
+     messagingSenderId: "123456789",
+     appId: "1:123456789:web:abc123..."
+   };
+
+────────────────────────────────────────────────────────────
+PASSO 4 — Incolla la config nel file lista-spesa.html
+────────────────────────────────────────────────────────────
+
+1. Apri il file "lista-spesa.html" con un editor di testo
+   (Blocco Note su Windows, TextEdit su Mac, oppure VS Code)
+
+2. Cerca la sezione (circa riga 170):
+
+   const firebaseConfig = {
+     apiKey: "INSERISCI-QUI",
+     authDomain: "INSERISCI-QUI",
+     databaseURL: "INSERISCI-QUI",
+     ...
+   };
+
+3. Sostituisci TUTTI i "INSERISCI-QUI" con i valori copiati
+   dal passo precedente.
+   
+   ⚠️  Attenzione: il campo "databaseURL" è fondamentale.
+   Se non lo vedi nella config Firebase, puoi copiarlo
+   dalla pagina Realtime Database (quello che inizia con https://).
+
+4. Salva il file.
+
+────────────────────────────────────────────────────────────
+PASSO 5 — Regole di sicurezza (facoltativo ma consigliato)
+────────────────────────────────────────────────────────────
+
+La "modalità test" permette accesso a tutti per 30 giorni.
+Per rendere permanente e sicuro, nel pannello Firebase:
+
+1. Vai su Realtime Database → Regole
+2. Sostituisci il contenuto con:
+
+{
+  "rules": {
+    ".read": true,
+    ".write": true
+  }
+}
+
+3. Clicca "Pubblica"
+
+Questo mantiene l'app accessibile a chiunque abbia il link
+(che è solo la tua famiglia, essendo su Vercel senza indici pubblici).
+Se vuoi sicurezza extra, puoi aggiungere autenticazione in futuro.
+
+────────────────────────────────────────────────────────────
+PASSO 6 — Pubblica su Vercel (come sempre)
+────────────────────────────────────────────────────────────
+
+1. Carica "lista-spesa.html" su GitHub
+   (crea repository → upload file → commit)
+
+2. Vai su vercel.com → New Project → importa il repo
+
+3. Clicca Deploy — in 30 secondi hai il link!
+   Es: lista-spesa-famiglia.vercel.app
+
+4. Condividi il link con la famiglia.
+   Ogni membro, alla prima apertura, inserirà:
+   - Il nome della famiglia (es: RossiBg2024)
+   - Il proprio nome (Mamma, Marco, ecc.)
+
+────────────────────────────────────────────────────────────
+COME FUNZIONA LA CONDIVISIONE
+────────────────────────────────────────────────────────────
+
+• Tutti i membri usano lo stesso "nome famiglia"
+• Ogni persona sceglie il proprio nome
+• La lista è condivisa e si aggiorna in tempo reale
+• Se uno aggiunge "Latte", gli altri lo vedono subito
+• Se uno spunta "Latte" come preso, sparisce dalla lista
+  di tutti
+
+Il puntino verde in alto indica connessione attiva.
+Il puntino rosso indica modalità offline
+(i dati si sincronizzano appena torna la connessione).
+
+────────────────────────────────────────────────────────────
+PROBLEMI COMUNI
+────────────────────────────────────────────────────────────
+
+"La lista non si aggiorna"
+→ Controlla che databaseURL sia corretto nel firebaseConfig.
+  Deve iniziare con https:// e finire con .firebasedatabase.app
+
+"Errore di accesso"
+→ Verifica le regole del database (Passo 5).
+  Assicurati di aver pubblicato le regole.
+
+"Non trovo databaseURL nella config"
+→ Vai su Realtime Database, copia l'URL mostrato in alto
+  e incollalo nel campo databaseURL della config.
+
+════════════════════════════════════════════════════════════
